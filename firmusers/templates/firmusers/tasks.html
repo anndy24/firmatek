@@ -1,0 +1,226 @@
+{% extends "firmusers/base.html" %}
+
+{% block body %}
+{% load static %}
+    <div class="container col-md-9">
+        <div class="row"> 
+            <div class="col-3 align-self-center"><h1 class="">Задачи</h1> </div>
+            <div class="col-sm-12 col-md-6 d-flex justify-content-end text-center align-self-center"> 
+                <form method="GET" action="{% url 'tasks' %}" class="d-inline-flex">
+                    <select name="project" class="form-select me-2">
+                    <option value="" {% if not selected_project %}selected{% endif %}>Все проекты</option>
+                    {% for project in projects %}
+                        <option value="{{ project.id }}" {% if selected_project == project.id %}selected{% endif %}>{{ project.title }}</option>
+                    {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-primary" type="submit">Фильтр</button>
+                </form>
+            </div>
+            {% if user.is_superuser %}
+            <div class="col-sm-3 d-flex justify-content-end text-center align-self-center mt-2 mt-sm-0">  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                <span class="d-none d-sm-inline">Добавить задачу</span>
+                <span class="d-sm-none">Добавить</span>
+                </button>
+            </div>
+            {% endif %}
+            <!-- Modal -->
+            <div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="addTaskModalLabel">Добавить задачу</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="post" id="addTaskForm">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            {{ formset.management_form }}
+                            
+                            <div id="subtaskFormset">
+                                <!-- Existing subtask fields -->
+                                {% for subtask_form in formset %}
+                                {{ subtask_form.as_p }}
+                                {% endfor %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                <button type="submit" class="btn btn-primary" form="addTaskForm">Добавить задачу</button>
+                            </div>
+                            </form>
+                        </div>    
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            {% for task in tasks %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        {% if task.is_done %}
+                        <div class="card-body" style="background-color: lightgray; opacity: 0.95;">
+                        {% else %}
+                        <div class="card-body">
+                        {% endif %}
+                            <br>
+                            <h5 class="card-title">{{ task.name }}</h5>
+                            {% if task.is_done %}
+                                <p class="text-muted">Выполнена</p>
+                            {% else %}
+                                <p class="text-muted">Активна</p>
+                            {% endif %}
+
+                            <br>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal{{ task.id  }}">Детали</button>
+                            <a href="{% url 'edit_task' task.id %}" class="btn btn-secondary">Редакт.</a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete_task{{ task.id }}">
+                              <i class="fa-solid fa-trash-can fa-lg"></i>
+                            </button>
+                            <!-- Edit Project Modal -->
+                            {% comment %} <div class="modal" id="editTaskModal{{ task.id }}" tabindex="-1" role="dialog" aria-labelledby="editTaskModalLabel{{ task.id }}" aria-hidden="true">
+                              <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title" id="editTaskModalLabel{{ task.id }}">Редактирование задачи</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                  </div>
+                                    <div class="modal-body">
+                                        <form method="POST" action="{% url 'task_edit' task.id %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <label for="task_name">Задача</label>
+                                            <input type="text" class="form-control" id="task_name" name="task_name" value="{{ task.name }}">
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="start_date">Дата начала</label>
+                                            <input type="text" class="form-control" id="start_date" name="start_date" value="{{ task.start_date }}">
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="end_date">Дата завершения</label>
+                                            <input type="text" class="form-control" id="end_date" name="end_date" value="{{ task.end_date }}">
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="is_done">Is Done</label>
+                                            <input type="checkbox" class="form-control" id="is_done" name="is_done" {% if task.is_done %}checked{% endif %}>
+                                          </div>
+                                            <!-- Подзадачи -->
+                                            {{ formset.management_form }}
+                                            {% for subtask_form in formset %}
+                                            <div class="subtask-form">
+                                              <div class="form-group">
+                                                <label for="{{ subtask_form.prefix }}-name">Имя подзадачи</label>
+                                                <input type="text" class="form-control" id="{{ subtask_form.prefix }}-name" name="{{ subtask_form.prefix }}-name" value="{{ subtask_form.instance.name }}">
+                                              </div>
+                                              <div class="form-group">
+                                                <label for="{{ subtask_form.prefix }}-start_date">Дата начала подзадачи</label>
+                                                <input type="text" class="form-control" id="{{ subtask_form.prefix }}-start_date" name="{{ subtask_form.prefix }}-start_date" value="{{ subtask_form.instance.start_date }}">
+                                              </div>
+                                              <div class="form-group">
+                                                <label for="{{ subtask_form.prefix }}-end_date">Дата окончания подзадачи</label>
+                                                <input type="text" class="form-control" id="{{ subtask_form.prefix }}-end_date" name="{{ subtask_form.prefix }}-end_date" value="{{ subtask_form.instance.end_date }}">
+                                              </div>
+                                              <div class="form-group">
+                                                <label for="{{ subtask_form.prefix }}-is_done">Подзадача выполнена</label>
+                                                <input type="checkbox" class="form-check-input" id="{{ subtask_form.prefix }}-is_done" name="{{ subtask_form.prefix }}-is_done" {% if subtask_form.instance.is_done %}checked{% endif %}>
+                                              </div>
+                                            </div>
+                                          {% endfor %}
+
+                                          <button type="submit" class="btn btn-primary">Save</button>
+                                        </form>
+                                    </div>  
+                                </div>
+                              </div>
+                            </div> {% endcomment %}
+
+                            <!-- Modal - Delete Project -->
+                            <div class="modal" id="delete_task{{task.id}}" tabindex="-1" aria-labelledby="delete_taskLabel2" aria-hidden="true">
+                              <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">
+                                      Задача {{ project.title }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true"></span>
+                                    </button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <p>Вы уверены, что хотите удалить эту задачу?</p>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <form action="{% url 'delete_task' task.id %}" method="POST">
+                                      {% csrf_token %}
+                                      <input type="submit" class="btn btn-primary" value="Удалить">
+                                    </form>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                  <!-- Modal -->
+                <div class="modal fade" id="taskModal{{ task.id }}" tabindex="-1" aria-labelledby="taskModalLabel{{ task.id }}" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="projectModalLabel{{ task.id }}">{{ task.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <p>{{ project.description }}</p>
+                        <p><strong>Дата начала:</strong> {{ task.start_date }}</p>
+                        <p><strong>Дата завершения:</strong> {{ task.end_date }}</p>
+                        <p><strong>Выполнена:</strong> <input type="checkbox" class="form-check-input" id="is_done{{ task.id }}" name="is_done" {% if task.is_done %}checked{% endif %} disabled></p>
+                        <ul class="list-group">
+                            {% for subtask in task.subtask_tasks.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-start ms-3 mb-1 border-0" >
+                              {% if subtask.is_done %}
+                                  <del>{{ subtask.name }}</del>
+                                  <del><small class="text-muted">{{ subtask.start_date }} - {{ subtask.end_date }}</small></del>
+                              {% else %}
+                                  {{ subtask.name }}
+                                  <small class="text-muted">{{ subtask.start_date }} - {{ subtask.end_date }}</small>
+                              {% endif %}
+                            </li>
+                            {% endfor %}
+                          </ul>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Закрыть</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            {% endfor %}            
+            <nav aria-label="Page navigation example">
+              <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1" tabindex="-1" aria-disabled="true">&laquo;</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+                  </li>
+                {% endif %}
+                <li class="page-item active" aria-current="page">
+                  <a class="page-link" href="?page={{ page_obj.number }}">{{ page_obj.number }}</a>
+                </li>
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+
+        </div>
+    </div>
+{% endblock %}

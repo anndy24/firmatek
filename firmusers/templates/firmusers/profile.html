@@ -1,0 +1,29 @@
+{% extends "firmusers/base.html" %}
+
+{% block body %}
+  <h3 class="text-center m-4">Редактирование информации</h3>
+  {% if success %}
+    <div class="alert alert-success" role="alert">
+      Данные пользователя обновлены.
+      <a href="{% url 'index' %}" class="alert-link">Вернуться на главную.</a>
+    </div>
+  {% else %}
+    <div class="row justify-content-center">
+      <div class="col-sm-12 col-lg-6">
+        <div class="card bg-light mb-3">
+          <div class="card-header">
+            <i class="fa-solid fa-pen-to-square fa-lg"></i> Обновить данные пользователя
+          </div>
+          <div class="card-body">
+            <form action="" method="POST">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <button type="submit" class="btn btn-primary">Сохранить</button>
+              <a href="{% url 'projects' %}" class="btn btn-secondary">Закрыть</a>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

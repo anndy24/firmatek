@@ -1,0 +1,254 @@
+{% extends "firmusers/base.html" %}
+
+{% block body %}
+{% load static %}
+    <div class="container col-md-9">
+      <div class="row"> 
+        <div class="col-md-4 align-self-center"><h1 class="">Архив</h1> </div>
+        <div class="col-md-5 align-self-center">
+          <form class="d-flex">
+            <input class="form-control me-2" type="search" name="search" placeholder="Поиск по архиву проектов" aria-label="Search">
+            <button class="btn btn-outline-primary d-none d-sm-inline" type="submit">Найти</button>
+          </form>
+        </div>
+      </div>  
+      <br>
+        <div class="row">
+            {% for project in archive %}
+                <div class="col-md-4 d-flex align-items-stretch mb-3">
+                  <div class="card-deck">
+                    <div class="card h-100 w-100">
+                        <img class="card-img-top text" src="{{ project.image.url }}" style="min-height: 200px; object-fit: cover; " alt="Card image cap">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ project.title }}</h5>
+                            <p class="card-text">{{ project.street }}</p>
+                            <p class="text-muted">{{ project.start_date }} </br> {{ project.end_date }}</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#projectModal{{ project.id }}">Детали</button>
+                            {% if user.is_superuser %}
+                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editProjectModal{{ project.id }}">Редакт.</button>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete_project{{project.id}}">
+                              <i class="fa-solid fa-trash-can fa-lg"></i>
+                            </button>
+                            {% endif %}
+                            <!-- Edit Project Modal -->
+                            <div class="modal" id="editProjectModal{{ project.id }}" tabindex="-1" role="dialog" aria-labelledby="editProjectModalLabel{{ project.id }}" aria-hidden="true">
+                              <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title" id="editProjectModalLabel{{ project.id }}">Редактирование проекта</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <form method="POST" action="{% url 'edit_project' project.id %}" enctype="multipart/form-data">
+                                      {% csrf_token %}
+                                      <!-- Update the form fields based on your project model -->
+                                      <div class="form-group">
+                                        <label for="title{{ project.id }}">Название:</label>
+                                        <input type="text" class="form-control" id="title{{ project.id }}" name="title" value="{{ project.title }}">
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="description{{ project.id }}">Описание:</label>
+                                        <textarea class="form-control" id="description{{ project.id }}" name="description">{{ project.description }}</textarea>
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="street{{ project.id }}">Улица:</label>
+                                        <input type="text" class="form-control" id="street{{ project.id }}" name="street" value="{{ project.street }}">
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="start_date{{ project.id }}">Дата начала:</label>
+                                        <input type="text" class="form-control" id="start_date{{ project.id }}" name="start_date" value="{{ project.start_date|date:'d.m.Y' }}">
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="end_date{{ project.id }}">Дата завершения:</label>
+                                        <input type="text" class="form-control" id="end_date{{ project.id }}" name="end_date" value="{{ project.end_date|date:'d.m.Y' }}">
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="image{{ project.id }}">Изображение:</label>
+                                        <input type="file" multiple class="form-control" id="image{{ project.id }}" name="image">
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="files{{ project.id }}">Файл:</label>
+                                        <input type="file" multiple class="form-control" id="files{{ project.id }}" name="files">
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="is_active{{ project.id }}">Активность проекта:</label>
+                                        <input type="checkbox" class="form-check-input" id="is_active{{ project.id }}" name="is_active" {% if project.is_active %}checked{% endif %}>
+                                      </div>
+                                      <p></p>
+                                      <div class="form-group">
+                                        <label for="professions{{ project.id }}">Подрядчики:</label>
+                                        <select multiple class="form-control" id="professions{{ project.id }}" name="professions">
+                                          {% for profession in form.professions.field.choices %}
+                                          <option value="{{ profession.0 }}" {% if profession.0 in project.professions.all %}selected{% endif %}>{{ profession.1 }}</option>
+                                          {% endfor %}
+                                        </select>
+                                      </div>
+                                      <p></p>
+                                      <div class="form-check form-switch">
+                                      <input class="form-check-input" type="checkbox" role="switch" id="open{{ project.id }}" name="open" {% if project.open %}checked{% endif %}>
+                                      <label class="form-check-label" for="open{{ project.id }}">Открытый доступ</label>
+                                      </div>
+                                      <p></p>
+                                      <br>
+                                      <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                                    </form>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Modal - Delete Project -->
+                            <div class="modal" id="delete_project{{project.id}}" tabindex="-1" aria-labelledby="delete_projectLabel2" aria-hidden="true">
+                              <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">
+                                      Проект {{ project.title }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true"></span>
+                                    </button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <p>Вы уверены, что хотите удалить этот проект?</p>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <form action="{% url 'delete_project' project.id %}" method="POST">
+                                      {% csrf_token %}
+                                      <input type="submit" class="btn btn-primary" value="Удалить">
+                                    </form>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+                  <!-- Modal -->
+                <div class="modal fade" id="projectModal{{ project.id }}" tabindex="-1" aria-labelledby="projectModalLabel{{ project.id }}" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="projectModalLabel{{ project.id }}">{{ project.title }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <img src="{{ project.image.url }}" class="card-img-top" alt="{{ project.title }}">
+                        <p><strong>Улица:</strong> {{ project.street }}
+                          <br> <a href="https://yandex.ru/maps/54/yekaterinburg/search/{{ project.street }}/" class="link-secondary link-underline link-underline-opacity-0"><i class="fa-solid fa-map-location-dot fa-sm"></i> Открыть карту</a></p>
+                        <p><strong>Описание:</strong> {{ project.description }}</p>
+                        <p><strong>Дата начала:</strong> {{ project.start_date }}</p>
+                        <p><strong>Дата завершения:</strong> {{ project.end_date }}</p>
+                        <p><strong>Активность:</strong> <input type="checkbox" class="form-check-input" id="is_active{{ project.id }}" name="is_active" {% if project.is_active %}checked{% endif %} disabled></p>
+                        <p><strong>Документы:</strong></p>
+                        <!-- Вывод иконки файла -->
+                        {% if project.files %}
+                            <a href="{{ project.files.url }}" download>
+                                <i class="fa-2x fa-regular fa-file-lines" style="color: #2a63c6;"></i>
+                                {{ project.file.name }}
+                            </a>
+                        {% else %}
+                            <p>Не прикреплены</p>
+                        {% endif %}
+                        <p><strong>Подрядчики:</strong> <p class="text-muted">
+                          {% for profession in project.professions.all %}
+                              <li class="ms-2">{{ profession.name }}</li>
+                          {% endfor %}
+                        </p></p>
+                        <p><strong>Задачи:</strong> 
+                          <ol class="list-group list-group-numbered">
+                            {% for task in project.task_set.all %}
+                              <li class="list-group-item d-flex justify-content-between align-items-start mb-1">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">{{ task.name }}</div>
+                                </div>
+                                <small class="text-muted">{{ task.start_date }} - {{ task.end_date }}</small>
+                              </li>
+                                  <ul class="list-group">
+                                    {% for subtask in task.subtask_tasks.all %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-start ms-3 mb-1 border-0" >
+                                      {% if subtask.is_done %}
+                                          <del>{{ subtask.name }}</del>
+                                          <del><small class="text-muted">{{ subtask.start_date }} - {{ subtask.end_date }}</small></del>
+                                      {% else %}
+                                          {{ subtask.name }}
+                                          <small class="text-muted">{{ subtask.start_date }} - {{ subtask.end_date }}</small>
+                                      {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                  </ul>
+                            {% endfor %}
+                          </ol>
+                        </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Закрыть</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            {% endfor %}
+            <br>
+            <nav aria-label="Page navigation example">
+              <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1" aria-label="First">
+                    <span aria-hidden="true">&laquo;</span>
+                    <span class="sr-only">First</span>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&lsaquo;</span>
+                    <span class="sr-only">Previous</span>
+                  </a>
+                </li>
+                {% endif %}
+                {% for i in page_obj.paginator.page_range %}
+                  {% if i == page_obj.number %}
+                  <li class="page-item active"><a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a></li>
+                  {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                  <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&rsaquo;</span>
+                    <span class="sr-only">Next</span>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                    <span aria-hidden="true">&raquo;</span>
+                    <span class="sr-only">Last</span>
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </nav>
+        </div>
+      </div>  
+    </div>
+    {% comment %} <script>
+      function copytext(el) {
+          var $tmp = $("<input>");
+          $("body").append($tmp);
+          $tmp.val($(el).text()).select();
+          document.execCommand("copy");
+          $tmp.remove();
+      }    
+    </script> {% endcomment %}
+    
+{% endblock %}

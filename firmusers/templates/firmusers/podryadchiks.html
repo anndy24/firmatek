@@ -1,0 +1,203 @@
+{% extends "firmusers/base.html" %}
+
+{% block body %}
+{% load static %}
+<div class="container col-md-9">
+    <div class="row"> 
+        <div class="col-4 align-self-center"><h1 class="">Подрядчики</h1> </div>
+        <div class="col-md-4 ms-auto align-self-center">
+        <form class="d-flex">
+          <input class="form-control me-2" type="search" name="search" placeholder="Поиск по подрядчикам" aria-label="Search">
+          <button class="btn btn-outline-primary d-none d-sm-inline" type="submit">Найти</button>
+        </form>
+      </div>
+      <div class="col-md-4 d-flex justify-content-end text-center align-self-center mt-2 mt-sm-0">  <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+        <span class="d-none d-sm-inline">Добавить подрядчика</span>
+        <span class="d-sm-none">Добавить</span>
+      </button></div>
+        <div class="modal fade" id="addProjectModal" tabindex="-1" role="dialog" aria-labelledby="addProjectModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                  <div class="modal-header">
+                      <h5 class="modal-title" id="addProjectModalLabel">Добавить подрядчика</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                  </div>
+                  <div class="modal-body">
+                      <!-- Форма для создания нового проекта -->
+                      <form method="POST" enctype="multipart/form-data">
+                          {% csrf_token %}
+                          {{ form.as_p }}
+                          <button type="submit" class="btn btn-primary">Сохранить</button>
+                      </form>
+                  </div>
+              </div>
+          </div>
+      </div>
+      </div>  
+      <br>
+        <div class="row">
+            {% for profession in professions %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <br>
+                            <h5 class="card-title">{{ profession.name }}</h5>
+                            <br>
+                            <br>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#projectModal{{ profession.id }}">Детали</button>
+                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editProjectModal{{ profession.id }}">Редакт.</button>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete_project{{profession.id}}">
+                              <i class="fa-solid fa-trash-can fa-lg"></i>
+                            </button>
+                            <!-- Edit Project Modal -->
+                            <div class="modal" id="editProjectModal{{ profession.id }}" tabindex="-1" role="dialog" aria-labelledby="editProjectModalLabel{{ profession.id }}" aria-hidden="true">
+                              <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title" id="editProjectModalLabel{{profession.id }}">Редактирование подрядчика</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <form method="POST" action="{% url 'edit_podryad' profession.id %}" enctype="multipart/form-data">
+                                      {% csrf_token %}
+                                      <!-- Update the form fields based on your project model -->
+                                      <div class="form-group">
+                                        <label for="name{{ profession.id }}">Подрядчик:</label>
+                                        <p></p>
+                                        <input type="text" class="form-control" id="name{{ profession.id }}" name="name" value="{{ profession.name }}">
+                                      </div>
+                                      <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                                      </div>
+                                    </form>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Modal - Delete Project -->
+                            <div class="modal" id="delete_project{{profession.id}}" tabindex="-1" aria-labelledby="delete_projectLabel2" aria-hidden="true">
+                              <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">
+                                      Подрядчик {{ profession.name }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true"></span>
+                                    </button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <p>Вы уверены, что хотите удалить подрядчика?</p>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <form action="{% url 'delete_project' profession.id %}" method="POST">
+                                      {% csrf_token %}
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                      <input type="submit" class="btn btn-primary" value="Удалить">
+                                    </form>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                  <!-- Modal -->
+                <div class="modal fade" id="projectModal{{ profession.id }}" tabindex="-1" aria-labelledby="projectModalLabel{{ profession.id }}" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="projectModalLabel{{ profession.id }}">{{ profession.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <h4><strong>Подрядчик:</strong> {{ profession.name }}</h4>
+                        <p></p>
+                        <h4>Сотрудники:</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-primary table-striped table-hover" style="font-size: 12px;">
+                                <thead>
+                                    <tr>
+                                        <th>Фамилия</th>
+                                        <th>Имя</th>
+                                        <th>Телефон</th>
+                                        <th>Номер машины</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in profession.professions.all %}
+                                    <tr>
+                                        <td>{{ user.last_name  }}</td>
+                                        <td>{{ user.first_name }}</td>
+                                        <td>
+                                            <ul>
+                                                {% for phone in user.phones.all %}
+                                                <li>{{ phone.name }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </td>
+                                        <td>
+                                            <ul>
+                                                {% for car_number in user.car_numbers.all %}
+                                                <li>{{ car_number.number }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Закрыть</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            {% endfor %}
+            <nav aria-label="Page navigation example">
+              <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1" aria-label="First">
+                    <span aria-hidden="true">&laquo;</span>
+                    <span class="sr-only">First</span>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&lsaquo;</span>
+                    <span class="sr-only">Previous</span>
+                  </a>
+                </li>
+                {% endif %}
+                {% for i in page_obj.paginator.page_range %}
+                  {% if i == page_obj.number %}
+                  <li class="page-item active"><a class="page-link" href="#">{{ i }} <span class="sr-only">(current)</span></a></li>
+                  {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                  <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&rsaquo;</span>
+                    <span class="sr-only">Next</span>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                    <span aria-hidden="true">&raquo;</span>
+                    <span class="sr-only">Last</span>
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </nav>
+        </div>
+      </div>  
+    </div>
+{% endblock %}

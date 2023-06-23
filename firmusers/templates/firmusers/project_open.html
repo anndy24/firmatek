@@ -1,0 +1,57 @@
+{% extends "firmusers/base.html" %}
+
+{% block body %}
+{% load static %}
+{% if project.open %}
+<h3 class="text-center m-4">Открытый доступ</h3>
+  <div class="row justify-content-center">
+    <div class="col-sm-12 col-lg-6">
+      <div class="card bg-light mb-3">
+        <div class="card-header">
+          <h5>{{ project.title }}</h5>
+        </div>
+        <div class="card-body">
+          <img src="{{ project.image.url }}" class="card-img-top">
+          <p><strong>Улица:</strong> {{ project.street }}
+            <br> <a href="https://yandex.ru/maps/54/yekaterinburg/search/{{ project.street }}/" class="link-secondary link-underline link-underline-opacity-0"><i class="fa-solid fa-map-location-dot fa-sm"></i> Открыть карту</a></p>
+          <p><strong>Описание:</strong> {{ project.description }}</p>
+          <p><strong>Дата начала:</strong> {{ project.start_date }}</p>
+          <p><strong>Дата завершения:</strong> {{ project.end_date }}</p>
+          <p><strong>Активность:</strong> <input type="checkbox" class="form-check-input" id="is_active{{ project.id }}" name="is_active" {% if project.is_active %}checked{% endif %} disabled></p>
+          <p><strong>Подрядчики:</strong> <p class="text-muted">
+            {% for profession in project.professions.all %}
+                <li class="ms-2">{{ profession.name }}</li>
+            {% endfor %}
+          </p></p>
+          <p><strong>Задачи:</strong> 
+            <ol class="list-group list-group-numbered">
+              {% for task in project.task_set.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-start mb-1">
+                  <div class="ms-2 me-auto">
+                      <div class="fw-bold">{{ task.name }}</div>
+                  </div>
+                  <small class="text-muted">{{ task.start_date }} - {{ task.end_date }}</small>
+                </li>
+                    <ul class="list-group">
+                      {% for subtask in task.subtask_tasks.all %}
+                      <li class="list-group-item d-flex justify-content-between align-items-start ms-3 mb-1 border-0" >
+                        {% if subtask.is_done %}
+                            <del>{{ subtask.name }}</del>
+                            <del><small class="text-muted">{{ subtask.start_date }} - {{ subtask.end_date }}</small></del>
+                        {% else %}
+                            {{ subtask.name }}
+                            <small class="text-muted">{{ subtask.start_date }} - {{ subtask.end_date }}</small>
+                        {% endif %}
+                      </li>
+                      {% endfor %}
+                    </ul>
+              {% endfor %}
+            </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <p>Этот проект не доступен для просмотра.</p>
+{% endif %}   
+{% endblock %}
